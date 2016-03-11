@@ -363,8 +363,8 @@ public:
 
     void clear()                                                        noexcept
     {
-        m_header.prev = &m_header;
-        m_header.next = &m_header;
+        m_header.prev = pointer(&m_header);
+        m_header.next = pointer(&m_header);
         m_size = 0;
     }
 
@@ -381,7 +381,7 @@ public:
         else if(cend() == pos)
         {
             v->prev = m_header.next;
-            v->next = &m_header;
+            v->next = pointer(&m_header);
             m_header.next->next = v;
             m_header.next = v;
         }
@@ -402,12 +402,12 @@ public:
         if(cbegin() == pos)
         {
             m_header.prev = n->next;
-            n->next->prev = &m_header;
+            n->next->prev = pointer(&m_header);
         }
         else if(m_header.next == n->prev)
         {
             m_header.next = n->prev->prev;
-            n->prev->next = &m_header;
+            n->prev->next = pointer(&m_header);
         }
         else
         {
@@ -430,11 +430,11 @@ public:
 
     void push_back(pointer n)                                           noexcept
     {
-        n->next = &m_header;
+        n->next = pointer(&m_header);
         link(m_header.next, n);
         m_header.next = n;
 
-        if(m_header.prev == &m_header)
+        if(m_header.prev == pointer(&m_header))
         {
             m_header.prev = n;
         }
@@ -444,11 +444,11 @@ public:
 
     void push_front(pointer n)                                          noexcept
     {
-        n->prev = &m_header;
+        n->prev = pointer(&m_header);
         link(n, m_header.prev);
         m_header.prev = n;
 
-        if(m_header.next == &m_header)
+        if(m_header.next == pointer(&m_header))
         {
             m_header.next = n;
         }
@@ -464,13 +464,13 @@ public:
         }
 
         m_header.next = m_header.next->prev;
-        m_header.next->next = &m_header;
+        m_header.next->next = pointer(&m_header);
 
         --m_size;
 
         if(empty())
         {
-            m_header.prev = &m_header;
+            m_header.prev = pointer(&m_header);
         }
     }
 
@@ -482,13 +482,13 @@ public:
         }
 
         m_header.prev = m_header.prev->next;
-        m_header.prev->prev = &m_header;
+        m_header.prev->prev = pointer(&m_header);
 
         --m_size;
 
         if(empty())
         {
-            m_header.next = &m_header;
+            m_header.next = pointer(&m_header);
         }
     }
 
@@ -524,7 +524,7 @@ private:
         n->prev = p;
     }
 
-    node_t    m_header { {}, &m_header, &m_header };
+    node_t    m_header { {}, pointer(&m_header), pointer(&m_header) };
     size_type m_size   { 0 };
 };
 
