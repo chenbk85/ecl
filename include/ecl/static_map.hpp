@@ -88,12 +88,32 @@ public:
         return static_cast<const tree_t*>(&m_tree)->end();
     }
 
+    const_iterator cbegin()                                       const noexcept
+    {
+        return static_cast<const tree_t*>(&m_tree)->begin();
+    }
+
+    const_iterator cend()                                         const noexcept
+    {
+        return static_cast<const tree_t*>(&m_tree)->end();
+    }
+
     const_reverse_iterator rbegin()                               const noexcept
     {
         return static_cast<const tree_t*>(&m_tree)->rbegin();
     }
 
     const_reverse_iterator rend()                                 const noexcept
+    {
+        return static_cast<const tree_t*>(&m_tree)->rend();
+    }
+
+    const_reverse_iterator crbegin()                              const noexcept
+    {
+        return static_cast<const tree_t*>(&m_tree)->rbegin();
+    }
+
+    const_reverse_iterator crend()                                const noexcept
     {
         return static_cast<const tree_t*>(&m_tree)->rend();
     }

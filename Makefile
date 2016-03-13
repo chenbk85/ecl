@@ -27,6 +27,7 @@ STREAM = stream
 STR_CONST = str_const
 STATIC_MAP = static_map
 TREE = tree
+LIST = list
 CMD = command_processor
 WEB = web
 STATIC_MAP = static_map
@@ -70,7 +71,7 @@ gen_web_res:
 	./res_gen.sh $(WEB_RES_SRC_DIR)/favicon.png           $(WEB_RES_GEN_DIR)/ -c
 	./res_gen.sh $(WEB_RES_SRC_DIR)/jquery.js             $(WEB_RES_GEN_DIR)/ -c
 
-tests_without_$(WEB): test_$(FSM) test_$(SG) test_$(CB) test_$(BF) test_$(SINGLETON) test_$(STREAM) test_$(JSON) test_$(STR_CONST) test_$(CMD) test_$(TREE) test_$(STATIC_MAP)
+tests_without_$(WEB): test_$(FSM) test_$(SG) test_$(CB) test_$(BF) test_$(SINGLETON) test_$(STREAM) test_$(JSON) test_$(STR_CONST) test_$(CMD) test_$(TREE) test_$(LIST) test_$(STATIC_MAP)
 
 test_$(FSM): out_dir
 	$(CXX) $(FLAGS) -I$(INCLUDE_DIR) -Wl,-Map=$(BIN_DIR)/$(FSM)_$(CXX).map $(TESTS_DIR)/test_$(FSM).cpp -o $(BIN_DIR)/$(FSM)_$(CXX)
@@ -101,6 +102,9 @@ test_$(STATIC_MAP): out_dir
 
 test_$(TREE): out_dir
 	$(CXX) $(FLAGS) -I$(INCLUDE_DIR) -Wl,-Map=$(BIN_DIR)/$(TREE)_$(CXX).map $(TESTS_DIR)/test_$(TREE).cpp -o $(BIN_DIR)/$(TREE)_$(CXX)
+
+test_$(LIST): out_dir
+	$(CXX) $(FLAGS) -I$(INCLUDE_DIR) -Wl,-Map=$(BIN_DIR)/$(LIST)_$(CXX).map $(TESTS_DIR)/test_$(LIST).cpp -o $(BIN_DIR)/$(LIST)_$(CXX)
 
 test_$(CMD): out_dir
 	$(CXX) $(FLAGS) -I$(INCLUDE_DIR) -Wl,-Map=$(BIN_DIR)/$(CMD)_$(CXX).map $(TESTS_DIR)/test_$(CMD).cpp -o $(BIN_DIR)/$(CMD)_$(CXX)
