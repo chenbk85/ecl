@@ -31,4 +31,6 @@ ecl.creator.user
 ecl.files
 ecl.includes
 
-build/
+*.gcno
+*.gcda
+*.gcov
