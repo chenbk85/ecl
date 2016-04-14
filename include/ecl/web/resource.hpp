@@ -15,17 +15,18 @@ namespace ecl
 namespace web
 {
 
-template<typename     RES_DATA,
-         content_type TYPE,
-         bool         GZIP_COMPRESSED,
-         status_code  CODE,
-         typename...  NAME
+template
+<
+      typename     RES_DATA
+    , content_type TYPE
+    , bool         GZIP_COMPRESSED
+    , status_code  CODE
 >
 class resource
 {
 public:
-    template<typename T>
-    status_code exec(T& st, const request* req)                            const
+    template<typename T, typename RQ>
+    status_code exec(T& st, const RQ& req)                                 const
     {
         if(nullptr != req)
         {
@@ -46,38 +47,6 @@ public:
         st << RES_DATA::data << "\r\n";
 
         return CODE;
-    }
-
-    template<typename N>
-    static bool check_resource_internal(const request* req)
-    {
-        if((0 == strncmp(req->uri, N::name(), N::size())) &&
-           (strlen(req->uri) == N::size())                &&
-           (method::GET == req->met)
-        )
-        {
-            return true;
-        }
-
-        return false;
-    }
-
-    template<typename N1, typename N2, typename... TAIL>
-    static bool check_resource_internal(const request* req)
-    {
-        if((0 == strncmp(req->uri, N1::name(), N1::size())) &&
-           (strlen(req->uri) == N1::size())                 &&
-           (method::GET == req->met))
-        {
-            return true;
-        }
-
-        return check_resource_internal<N2, TAIL...>(req);
-    }
-
-    static bool check_resource(const request* req)
-    {
-        return check_resource_internal<NAME...>(req);
     }
 };
 

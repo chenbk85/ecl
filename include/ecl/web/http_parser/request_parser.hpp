@@ -1,13 +1,11 @@
 #ifndef ECL_WEB_REQUEST_PARSER_HPP
 #define ECL_WEB_REQUEST_PARSER_HPP
 
+#include <ecl/web/http_parser/parser_fsm.hpp>
+
 #include <cstring>
 
 #include <algorithm>
-
-#include <ecl/web/parser_fsm.hpp>
-
-#include <ecl/str_const.hpp>
 
 namespace ecl
 {
@@ -15,24 +13,39 @@ namespace ecl
 namespace web
 {
 
-template<std::size_t MAX_REQUEST_SIZE = 1024>
+template
+<
+      std::size_t MAX_REQUEST_CHUNK_SIZE = 1024
+    , std::size_t MAX_URI_LENGTH         = 256
+    , std::size_t MAX_URI_PARAMETERS     = 8
+    , std::size_t MAX_HEADER_LENGTH      = 128
+    , std::size_t MAX_HEADERS_COUNT      = 16
+>
 class request_parser
 {
 public:
-    const request* parse(request_raw_t raw, size_t size)
-    {
-        memset(m_request_raw, 0, MAX_REQUEST_SIZE);
+    using request_t = request
+    <
+          MAX_URI_LENGTH
+        , MAX_URI_PARAMETERS
+        , MAX_HEADER_LENGTH
+        , MAX_HEADERS_COUNT
+    >;
 
-        if(size > MAX_REQUEST_SIZE)
+    const request_t parse(request_raw_t raw, size_t size)
+    {
+        memset(m_request_chunk_raw, 0, MAX_REQUEST_CHUNK_SIZE);
+
+        if(size > MAX_REQUEST_CHUNK_SIZE)
         {
             return nullptr;
         }
 
-        memcpy(m_request_raw, raw, size);
+        memcpy(m_request_chunk_raw, raw, size);
 
         parser_state st = m_parser.process_event(rst());
 
-        char* current = m_request_raw;
+        char* current = m_request_chunk_raw;
         char* next    = nullptr;
 
         do
@@ -77,16 +90,17 @@ public:
 
         if(st == parser_state::complete)
         {
-            return m_parser.get_request_ptr();
+            return m_parser.get_request();
         }
 
         return nullptr;
     }
 
 private:
-    char                       m_request_raw [MAX_REQUEST_SIZE];
+    char       m_request_chunk_raw [MAX_REQUEST_CHUNK_SIZE];
 
-    parser_fsm                 m_parser {};
+    request_t  m_request {};
+    parser_fsm m_parser {};
 
     const char m_cr   { '\r' };
     const char m_lf   { '\n' };

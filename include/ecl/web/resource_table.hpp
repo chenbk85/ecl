@@ -1,8 +1,9 @@
 #ifndef ECL_WEB_RESOURCE_TABLE
 #define ECL_WEB_RESOURCE_TABLE
 
-#include <cstring>
 #include <ecl/web/request.hpp>
+
+#include <cstring>
 
 namespace ecl
 {
@@ -10,50 +11,62 @@ namespace ecl
 namespace web
 {
 
-template<
-    typename    PAGE_400,
-    typename    PAGE_404,
-    typename    PAGE_500,
-    typename... RESOURCES
+template
+<
+      typename    PAGE_400
+    , typename    PAGE_404
+    , typename    PAGE_500
+    , typename... RESOURCES
 >
-class resource_table : public PAGE_400,
-                       public PAGE_404,
-                       public PAGE_500,
-                       public RESOURCES...
+class resource_table : public PAGE_400
+                     , public PAGE_404
+                     , public PAGE_500
+                     , public RESOURCES...
 {
 public:
-    template<typename T>
-    status_code call(T& st, const request* req)
+    template<typename STREAM, typename RQ>
+    status_code call(STREAM& st, const RQ& req)
     {
-        if(nullptr == req)
+        if(nullptr == req.uri)
         {
-            return this->PAGE_400::template exec<T>(st, nullptr);
+            return this->PAGE_400::template exec<STREAM>(st, nullptr);
         }
 
-        if(nullptr == req->uri)
-        {
-            return this->PAGE_400::template exec<T>(st, nullptr);
-        }
-
-        return call_internal<T, RESOURCES...>(st, req);
+        return call_internal<STREAM, RQ, RESOURCES...>(st, req);
     }
 
 private:
-    template<typename T, typename RES, typename... TAIL>
-    status_code call_internal(T& st, const request* req)
+    template<typename STREAM, typename RQ, typename R_PAIR, typename... TAIL>
+    status_code call_internal(STREAM& st, const RQ& req)
     {
-        if(RES::check_resource(req))
+        if(is_name_match<typename R_PAIR::first_type>(req.uri))
         {
-            return this->RES::template exec<T>(st, req);
+            return this->R_PAIR::second_type::template exec<STREAM>(st, req);
         }
 
-        return call_internal<T, TAIL...>(st, req);
+        return call_internal<STREAM, RQ, TAIL...>(st, req);
     }
 
-    template<typename T>
-    status_code call_internal(T& st, const request* req)
+    template<typename STREAM, typename RQ>
+    status_code call_internal(STREAM& st, const RQ& req)
     {
-        return this->PAGE_404::template exec<T>(st, req);
+        return this->PAGE_404::second_type::template exec<STREAM>(st, req);
+    }
+
+    template<typename NAME>
+    bool is_name_match(const char* uri)
+    {
+        if(std::strlen(uri) != NAME::size())
+        {
+            return false;
+        }
+
+        if(0 == std::strncmp(uri, NAME::name(), NAME::size()))
+        {
+            return true;
+        }
+
+        return false;
     }
 };
 

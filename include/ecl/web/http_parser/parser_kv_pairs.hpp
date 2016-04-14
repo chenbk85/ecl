@@ -14,13 +14,13 @@ namespace web
 
 enum class kv_parser_state
 {
-    init,
-    name_parsing,
-    value_parsing,
-    equal_found,
-    delimiter_found,
-    done,
-    error
+      init
+    , name_parsing
+    , value_parsing
+    , equal_found
+    , delimiter_found
+    , done
+    , error
 };
 
 struct rst                  {};

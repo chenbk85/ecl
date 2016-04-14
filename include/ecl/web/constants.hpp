@@ -13,91 +13,91 @@ namespace web
 
 enum class version
 {
-    HTTP10 ,
-    HTTP11 ,
-    HTTP20
+      HTTP10
+    , HTTP11
+    , HTTP20
 };
 
 enum class status_code
 {
-    CONTINUE                      ,
-    SWITCHING_PROTO               ,
+      CONTINUE
+    , SWITCHING_PROTO
 
-    OK                            ,
-    CREATED                       ,
-    ACCEPTED                      ,
-    NO_CONTENT                    ,
-    RESET_CONTENT                 ,
-    PARTIAL_CONTENT               ,
+    , OK
+    , CREATED
+    , ACCEPTED
+    , NO_CONTENT
+    , RESET_CONTENT
+    , PARTIAL_CONTENT
 
-    MULTIPLE_CHOICES              ,
-    MOVED_PERMANENTLY             ,
-    FOUND                         ,
-    SEE_OTHER                     ,
-    NOT_MODIFIED                  ,
-    USE_PROXY                     ,
-    SWITCH_PROXY                  ,
-    TEMPORARY_REDIRECT            ,
-    PERMANENT_REDIRECT            ,
+    , MULTIPLE_CHOICES
+    , MOVED_PERMANENTLY
+    , FOUND
+    , SEE_OTHER
+    , NOT_MODIFIED
+    , USE_PROXY
+    , SWITCH_PROXY
+    , TEMPORARY_REDIRECT
+    , PERMANENT_REDIRECT
 
-    BAD_REQUEST                   ,
-    UNAUTHORIZED                  ,
-    PAYMENT_REQUIRED              ,
-    FORBIDDEN                     ,
-    NOT_FOUND                     ,
-    METHOD_NOT_ALLOWED            ,
-    NOT_ACCEPTABLE                ,
-    REQUEST_TIMEOUT               ,
-    CONFLICT                      ,
-    GONE                          ,
-    LENGTH_REQUIRED               ,
-    PRECONDITION_FAILED           ,
-    REQUEST_ENTITY_TOO_LARGE      ,
-    REQUEST_URI_TOO_LONG          ,
-    UNSUPPORTED_MEDIA_TYPE        ,
-    REQUEST_RANGE_NOT_SATISFIABLE ,
-    EXPECTATION_FAILED            ,
+    , BAD_REQUEST
+    , UNAUTHORIZED
+    , PAYMENT_REQUIRED
+    , FORBIDDEN
+    , NOT_FOUND
+    , METHOD_NOT_ALLOWED
+    , NOT_ACCEPTABLE
+    , REQUEST_TIMEOUT
+    , CONFLICT
+    , GONE
+    , LENGTH_REQUIRED
+    , PRECONDITION_FAILED
+    , REQUEST_ENTITY_TOO_LARGE
+    , REQUEST_URI_TOO_LONG
+    , UNSUPPORTED_MEDIA_TYPE
+    , REQUEST_RANGE_NOT_SATISFIABLE
+    , EXPECTATION_FAILED
 
-    INTERNAL_SERVER_ERROR         ,
-    NOT_IMPLEMENTED               ,
-    BAD_GATEWAY                   ,
-    SERVICE_UNAVAILABLE           ,
-    GATEWAY_TIMEOUT               ,
-    HTTP_VERSION_NOT_SUPPORTED
+    , INTERNAL_SERVER_ERROR
+    , NOT_IMPLEMENTED
+    , BAD_GATEWAY
+    , SERVICE_UNAVAILABLE
+    , GATEWAY_TIMEOUT
+    , HTTP_VERSION_NOT_SUPPORTED
 };
 
 enum class method
 {
-    GET     ,
-    HEAD    ,
-    PUT     ,
-    DELETE  ,
-    POST    ,
-    OPTIONS ,
-    TRACE   ,
-    CONNECT
+      GET
+    , HEAD
+    , PUT
+    , DELETE
+    , POST
+    , OPTIONS
+    , TRACE
+    , CONNECT
 };
 
 enum class header_name
 {
-    CONTENT_TYPE     ,
-    CONTENT_LENGTH   ,
-    CONTENT_ENCODING ,
-    ACCEPT_ENCODING  ,
-    LOCATION
+      CONTENT_TYPE
+    , CONTENT_LENGTH
+    , CONTENT_ENCODING
+    , ACCEPT_ENCODING
+    , LOCATION
 };
 
 enum class content_type
 {
-    APPLICATION_JSON ,
-    TEXT_HTML        ,
-    TEXT_CSS         ,
-    TEXT_JAVASCRIPT  ,
-    IMAGE_PNG        ,
-    IMAGE_JPEG       ,
-    IMAGE_X_ICON     ,
-    IMAGE_GIF        ,
-    TEXT_PLAIN
+      APPLICATION_JSON
+    , TEXT_HTML
+    , TEXT_CSS
+    , TEXT_JAVASCRIPT
+    , IMAGE_PNG
+    , IMAGE_JPEG
+    , IMAGE_X_ICON
+    , IMAGE_GIF
+    , TEXT_PLAIN
 };
 
 enum class content_encoding

@@ -1,10 +1,10 @@
+#include <ecl/name_type.hpp>
+#include <ecl/json.hpp>
+
 #include <cstddef>
 #include <cstdint>
 
-#include <ecl/web/cgi.hpp>
-
-#include <ecl/name_type.hpp>
-#include <ecl/json.hpp>
+#include <iostream>
 
 namespace name
 {
@@ -23,17 +23,11 @@ namespace name
     ECL_DECL_NAME_TYPE(val_9)
 } // namespace name
 
-template<typename... NAME>
-class upload : public ecl::web::cgi<NAME...>
+class upload
 {
 public:
-    upload()
-    {
-
-    }
-
-    template<typename T>
-    ecl::web::status_code exec(T& st, const ecl::web::request* req)
+    template<typename T, typename RQ>
+    ecl::web::status_code exec(T& st, const RQ& req)
     {
         ecl::web::write_status_line(st, req->ver, ecl::web::status_code::OK);
 
@@ -41,8 +35,7 @@ public:
     }
 };
 
-template<typename... NAME>
-class settings : public ecl::web::cgi<NAME...>
+class settings
 {
 private:
     using document_t = ecl::json::object
@@ -57,8 +50,8 @@ private:
     document_t m_doc;
 
 public:
-    template<typename T>
-    ecl::web::status_code exec(T& st, const ecl::web::request* req)
+    template<typename T, typename RQ>
+    ecl::web::status_code exec(T& st, const RQ& req)
     {
         (void)st;
 
@@ -84,8 +77,7 @@ public:
     }
 };
 
-template<typename... NAME>
-class info : public ecl::web::cgi<NAME...>
+class info
 {
 private:
     using document_t = ecl::json::object
@@ -98,8 +90,8 @@ private:
     document_t m_doc {};
 
 public:
-    template<typename T>
-    ecl::web::status_code exec(T& st, const ecl::web::request* req)
+    template<typename T, typename RQ>
+    ecl::web::status_code exec(T& st, const RQ& req)
     {
         ecl::web::write_status_line(st, req->ver, ecl::web::status_code::OK);
 
@@ -121,12 +113,11 @@ private:
     uint32_t m_counter { 0 };
 };
 
-template<typename... NAME>
-class auth : public ecl::web::cgi<NAME...>
+class auth
 {
 public:
-    template<typename T>
-    ecl::web::status_code exec(T& st, const ecl::web::request* req)
+    template<typename T, typename RQ>
+    ecl::web::status_code exec(T& st, const RQ& req)
     {
         char buf[128];
 

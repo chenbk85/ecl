@@ -1,13 +1,12 @@
 #ifndef ECL_WEB_PARSER_FSM_HPP
 #define ECL_WEB_PARSER_FSM_HPP
 
-#include <cstring>
-
 #include <ecl/fsm.hpp>
 
 #include <ecl/web/request.hpp>
+#include <ecl/web/http_parser/parser_kv_pairs.hpp>
 
-#include <ecl/web/parser_kv_pairs.hpp>
+#include <cstring>
 
 namespace ecl
 {
@@ -36,7 +35,8 @@ struct event_line
 struct empty_line {};
 struct end_of_req {};
 
-class parser_fsm : public state_machine<parser_fsm,
+template<typename RQ>
+class parser_fsm : public state_machine<parser_fsm<RQ>,
                                         parser_state,
                                         parser_state::init>
 {
@@ -187,19 +187,19 @@ class parser_fsm : public state_machine<parser_fsm,
 
     using transition_table_t = transition_table
     <
-        row< s::init,                event_line, s::request_line_parsed, nullptr, &p::g_request_line_parse >,
-        row< s::request_line_parsed, event_line, s::header_parse,        nullptr, &p::g_header_parse       >,
-        row< s::header_parse,        event_line, s::header_parse,        nullptr, &p::g_header_parse       >,
-        row< s::header_parse,        empty_line, s::headers_parsed,      nullptr, nullptr                  >,
-        row< s::headers_parsed,      end_of_req, s::complete,            nullptr, nullptr                  >,
-        row< s::headers_parsed,      event_line, s::body_parsed,         nullptr, &p::g_body_parsed        >,
-        row< s::body_parsed,         end_of_req, s::complete,            nullptr, nullptr                  >,
+        row< s::init                , event_line , s::request_line_parsed , nullptr , &p::g_request_line_parse >,
+        row< s::request_line_parsed , event_line , s::header_parse        , nullptr , &p::g_header_parse       >,
+        row< s::header_parse        , event_line , s::header_parse        , nullptr , &p::g_header_parse       >,
+        row< s::header_parse        , empty_line , s::headers_parsed      , nullptr , nullptr                  >,
+        row< s::headers_parsed      , end_of_req , s::complete            , nullptr , nullptr                  >,
+        row< s::headers_parsed      , event_line , s::body_parsed         , nullptr , &p::g_body_parsed        >,
+        row< s::body_parsed         , end_of_req , s::complete            , nullptr , nullptr                  >,
 
-        row< s::request_line_parsed, rst,        s::init,                nullptr, nullptr                  >,
-        row< s::header_parse,        rst,        s::init,                nullptr, nullptr                  >,
-        row< s::headers_parsed,      rst,        s::init,                nullptr, nullptr                  >,
-        row< s::body_parsed,         rst,        s::init,                nullptr, nullptr                  >,
-        row< s::complete,            rst,        s::init,                nullptr, nullptr                  >
+        row< s::request_line_parsed , rst        , s::init                , nullptr , nullptr                  >,
+        row< s::header_parse        , rst        , s::init                , nullptr , nullptr                  >,
+        row< s::headers_parsed      , rst        , s::init                , nullptr , nullptr                  >,
+        row< s::body_parsed         , rst        , s::init                , nullptr , nullptr                  >,
+        row< s::complete            , rst        , s::init                , nullptr , nullptr                  >
     >;
 
     using callback_table_t = callback_table
@@ -214,11 +214,6 @@ public:
         return transition<event_t, transition_table_t, callback_table_t>(e);
     }
 
-    const request* get_request_ptr()
-    {
-        return &m_request;
-    }
-
 private:
     kv_parser m_uri_param_parser
     {
@@ -227,8 +222,6 @@ private:
         str_const("="),
         str_const("&;")
     };
-
-    request                  m_request          {};
 };
 
 } // namespace web

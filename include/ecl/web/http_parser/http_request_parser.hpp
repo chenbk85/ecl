@@ -12,29 +12,29 @@ namespace web
 
 enum class http_request_parser_state
 {
-    init                  ,
+      init
 
-    parsing_method        ,
-    parsing_method_done   ,
+    , parsing_method
+    , parsing_method_done
 
-    parsing_uri           ,
-    parsing_uri_done      ,
+    , parsing_uri
+    , parsing_uri_done
 
-    parsing_version       ,
-    parsing_version_done  ,
+    , parsing_version
+    , parsing_version_done
 
-    parsing_header        ,
-    parsing_header_done   ,
+    , parsing_header
+    , parsing_header_done
 
-    waiting_for_eol       ,
+    , waiting_for_eol
 
-    receiving_body        ,
+    , receiving_body
 
-    error                 ,
-    error_parsing_method  ,
-    error_parsing_uri     ,
-    error_parsing_version ,
-    error_parsing_header
+    , error
+    , error_parsing_method
+    , error_parsing_uri
+    , error_parsing_version
+    , error_parsing_header
 };
 
 struct start      {};

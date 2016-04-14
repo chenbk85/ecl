@@ -1,12 +1,3 @@
-#include <cstdint>
-#include <cstdlib>
-#include <iostream>
-#include <iomanip>
-
-#include <sys/socket.h>
-#include <netdb.h>
-#include <unistd.h>
-
 #include <ecl/name_type.hpp>
 #include <ecl/web.hpp>
 
@@ -25,12 +16,23 @@
 
 #include "cgis.hpp"
 
-#define RECV_BUFFER_SIZE 2048
+#include <cstdint>
+#include <cstdlib>
+
+#include <iostream>
+#include <iomanip>
+#include <utility>
+
+#include <sys/socket.h>
+#include <netdb.h>
+#include <unistd.h>
+
+#define BUFFER_SIZE 1538 // MTU
 
 namespace name
 {
     ECL_DECL_NAME_TYPE_STRING(index_1,          "/")
-    ECL_DECL_NAME_TYPE_STRING(index_2,          "/index.html")
+    // ECL_DECL_NAME_TYPE_STRING(index_2,          "/index.html")
     ECL_DECL_NAME_TYPE_STRING(authorized_index, "/authorized_index.html")
     ECL_DECL_NAME_TYPE_STRING(icon,             "/etc/img/icon.png")
     ECL_DECL_NAME_TYPE_STRING(favicon,          "/favicon.png")
@@ -61,34 +63,35 @@ using server_t = ecl::web::server
 <
     ecl::web::resource_table
     <
-//                           Data container type          Type of resource           Gzip   Result code                      Name type
+//                 Name type                                     Data container type           Type of resource                          Gzip    Result code
 // static resources
-        ecl::web::resource < res_400_html_t,              ecl::web::content_type::TEXT_HTML,       false, ecl::web::status_code::BAD_REQUEST,           name::page_400               >,
-        ecl::web::resource < res_404_html_t,              ecl::web::content_type::TEXT_HTML,       false, ecl::web::status_code::NOT_FOUND,             name::page_404               >,
-        ecl::web::resource < res_500_html_t,              ecl::web::content_type::TEXT_HTML,       false, ecl::web::status_code::INTERNAL_SERVER_ERROR, name::page_500               >,
+        std::pair< name::page_400         , ecl::web::resource < res_400_html_t              , ecl::web::content_type::TEXT_HTML       , false , ecl::web::status_code::BAD_REQUEST           > >,
+        std::pair< name::page_404         , ecl::web::resource < res_404_html_t              , ecl::web::content_type::TEXT_HTML       , false , ecl::web::status_code::NOT_FOUND             > >,
+        std::pair< name::page_500         , ecl::web::resource < res_500_html_t              , ecl::web::content_type::TEXT_HTML       , false , ecl::web::status_code::INTERNAL_SERVER_ERROR > >,
 // index
-        ecl::web::resource < res_index_html_t,            ecl::web::content_type::TEXT_HTML,       true,  ecl::web::status_code::OK,                    name::index_1, name::index_2 >,
+        std::pair< name::index_1          , ecl::web::resource < res_index_html_t            , ecl::web::content_type::TEXT_HTML       , true  , ecl::web::status_code::OK                    > >,
 // authorized_index
-        ecl::web::resource < res_authorized_index_html_t, ecl::web::content_type::TEXT_HTML,       true,  ecl::web::status_code::OK,                    name::authorized_index       >,
+        std::pair< name::authorized_index , ecl::web::resource < res_authorized_index_html_t , ecl::web::content_type::TEXT_HTML       , true  , ecl::web::status_code::OK                    > >,
 // logo
-        ecl::web::resource < res_icon_png_t,              ecl::web::content_type::IMAGE_PNG,       true,  ecl::web::status_code::OK,                    name::icon                   >,
+        std::pair< name::icon             , ecl::web::resource < res_icon_png_t              , ecl::web::content_type::IMAGE_PNG       , true  , ecl::web::status_code::OK                    > >,
 // favicon
-        ecl::web::resource < res_favicon_png_t,           ecl::web::content_type::IMAGE_PNG,       true,  ecl::web::status_code::OK,                    name::favicon                >,
+        std::pair< name::favicon          , ecl::web::resource < res_favicon_png_t           , ecl::web::content_type::IMAGE_PNG       , true  , ecl::web::status_code::OK                    > >,
 // CSS
-        ecl::web::resource < res_style_css_t,             ecl::web::content_type::TEXT_CSS,        true,  ecl::web::status_code::OK,                    name::style                  >,
+        std::pair< name::style            , ecl::web::resource < res_style_css_t             , ecl::web::content_type::TEXT_CSS        , true  , ecl::web::status_code::OK                    > >,
 // jquery
-        ecl::web::resource < res_jquery_js_t,             ecl::web::content_type::TEXT_JAVASCRIPT, true,  ecl::web::status_code::OK,                    name::jquery                 >,
+        std::pair< name::jquery           , ecl::web::resource < res_jquery_js_t             , ecl::web::content_type::TEXT_JAVASCRIPT , true  , ecl::web::status_code::OK                    > >,
 // CGIs
-        info     < name::info     >,
-        auth     < name::auth     >,
-        settings < name::settings >,
-        upload   < name::upload   >
+        std::pair< name::info             , info     >,
+        std::pair< name::auth             , auth     >,
+        std::pair< name::settings         , settings >,
+        std::pair< name::upload           , upload   >
     >,
 // Max request size
-    RECV_BUFFER_SIZE
+    BUFFER_SIZE
 >;
 
-static char buffer[RECV_BUFFER_SIZE];
+
+static char buffer[BUFFER_SIZE];
 
 [[ noreturn ]]
 void start_server(const char*);
@@ -111,8 +114,26 @@ void start_server(const char* port)
     int status;
     struct addrinfo  host_info;
     struct addrinfo* host_info_list;
+/*
+    auto server = ecl::web::create_server<BUFFER_SIZE, 128, 32, 128, 16>
+    (
+          std::make_pair("/400.html"         , ecl::web::resource ( res_400_html_t()    , ecl::web::content_type::TEXT_HTML       , false , ecl::web::status_code::BAD_REQUEST           ) )
+        , std::make_pair("/404.html"         , ecl::web::resource ( res_404_html_t()    , ecl::web::content_type::TEXT_HTML       , false , ecl::web::status_code::NOT_FOUND             ) )
+        , std::make_pair("/500.html"         , ecl::web::resource ( res_500_html_t()    , ecl::web::content_type::TEXT_HTML       , false , ecl::web::status_code::INTERNAL_SERVER_ERROR ) )
+        , std::make_pair("/"                 , ecl::web::resource ( res_index_html_t()  , ecl::web::content_type::TEXT_HTML       , true  , ecl::web::status_code::OK                    ) )
 
-    static server_t server;
+        , std::make_pair("/etc/img/icon.png" , ecl::web::resource ( res_icon_png_t()    , ecl::web::content_type::IMAGE_PNG       , true  , ecl::web::status_code::OK                    ) )
+        , std::make_pair("/favicon.png"      , ecl::web::resource ( res_favicon_png_t() , ecl::web::content_type::IMAGE_PNG       , true  , ecl::web::status_code::OK                    ) )
+        , std::make_pair("/etc/style.css"    , ecl::web::resource ( res_style_css_t()   , ecl::web::content_type::TEXT_CSS        , true  , ecl::web::status_code::OK                    ) )
+        , std::make_pair("/etc/js/jquery.js" , ecl::web::resource ( res_jquery_js_t()   , ecl::web::content_type::TEXT_JAVASCRIPT , true  , ecl::web::status_code::OK                    ) )
+
+        , std::make_pair("/info"             , ecl::web::resource ( info()     ) )
+        , std::make_pair("/auth"             , ecl::web::resource ( auth()     ) )
+        , std::make_pair("/settings"         , ecl::web::resource ( settings() ) )
+        , std::make_pair("/upload"           , ecl::web::resource ( upload()   ) )
+    );
+*/
+    server_t server;
 
     memset(&host_info, 0, sizeof host_info);
 
@@ -122,7 +143,6 @@ void start_server(const char* port)
     host_info.ai_socktype = SOCK_STREAM; // Use SOCK_STREAM for TCP or SOCK_DGRAM for UDP.
     host_info.ai_flags = AI_PASSIVE;     // IP Wildcard
 
-    // Now fill up the linked list of host_info structs with google's address information.
     status = getaddrinfo(NULL, port, &host_info, &host_info_list);
     // getaddrinfo returns 0 on succes, or some other value when an error occured.
     // (translated into human readable text by the gai_gai_strerror function).
@@ -176,7 +196,7 @@ void start_server(const char* port)
 
         std::cout << "Waiting to recieve data..."  << std::endl;
         ssize_t bytes_recieved;
-        bytes_recieved = recv(new_sd, buffer, RECV_BUFFER_SIZE, 0);
+        bytes_recieved = recv(new_sd, buffer, BUFFER_SIZE, 0);
         // If no data arrives, the program will just wait here until some data arrives.
         if (bytes_recieved == 0)
         {
@@ -203,7 +223,7 @@ void start_server(const char* port)
         // std::cout << std::endl;
         std::cout << buffer << std::endl;
 
-        ecl::stream<RECV_BUFFER_SIZE> out_stream(write_sock);
+        ecl::stream<BUFFER_SIZE> out_stream(write_sock);
         server.process_request(out_stream, buffer, static_cast<std::size_t>(bytes_recieved));
         out_stream.flush();
 
