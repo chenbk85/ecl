@@ -1,13 +1,13 @@
 #ifndef ECL_WEB_RESOURCE_HPP
 #define ECL_WEB_RESOURCE_HPP
 
+#include <ecl/web/request.hpp>
+#include <ecl/web/constants.hpp>
+
 #include <cstdint>
 #include <cstring>
 
 #include <algorithm>
-
-#include <ecl/web/request.hpp>
-#include <ecl/web/constants.hpp>
 
 namespace ecl
 {
