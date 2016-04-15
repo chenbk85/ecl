@@ -4,13 +4,17 @@
 #include <ecl/fsm.hpp>
 #include <ecl/str_const.hpp>
 
-#include <ecl/web/uri_param.hpp>
+#include <ecl/web/kv_pair.hpp>
+
+#include <functional>
 
 namespace ecl
 {
 
 namespace web
 {
+
+using parse_callback_t = std::function < void ( kv_pair_t ) >;
 
 enum class kv_parser_state
 {
@@ -60,59 +64,45 @@ private:
 
     void on_init_enter()
     {
-        m_params_count = 0;
+    }
+
+    void on_delimiter_found_enter()
+    {
+        if(nullptr != m_cb)
+        {
+            m_cb(m_param);
+        }
     }
 
     void on_equal_found(const equal_sign& e)
     {
-        m_params[m_params_count].name = m_token;
+        m_param.first = m_token;
         *e.p = 0;
         m_token = e.p + 1;
     }
 
     void on_delimiter_found_name(const delimiter& e)
     {
-        if(m_params_count == m_max_params_count)
-        {
-            return;
-        }
-
-        m_params[m_params_count].name = m_token;
+        m_param.first = m_token;
         *e.p = 0;
         m_token = e.p + 1;
-
-        ++m_params_count;
     }
 
     void on_end_name(const end&)
     {
-        if(m_params_count == m_max_params_count)
-        {
-            return;
-        }
-
-        m_params[m_params_count].name = m_token;
-        ++m_params_count;
+        m_param.first = m_token;
     }
 
     void on_delimiter_found_value(const delimiter& e)
     {
-        if(m_params_count == m_max_params_count)
-        {
-            return;
-        }
-
-        m_params[m_params_count].value = m_token;
+        m_param.second = m_token;
         *e.p = 0;
         m_token = e.p + 1;
-
-        ++m_params_count;
     }
 
     void on_end_value(const end&)
     {
-        m_params[m_params_count].value = m_token;
-        ++m_params_count;
+        m_param.second = m_token;
     }
 
     using s = kv_parser_state;
@@ -161,7 +151,8 @@ private:
 
     using callback_table_t = callback_table
     <
-        scb< s::init, &p::on_init_enter >
+        scb< s::init            , &p::on_init_enter            >,
+        scb< s::delimiter_found , &p::on_delimiter_found_enter >
     >;
 
     template<typename event_t>
@@ -184,14 +175,11 @@ private:
     }
 
 public:
-    kv_parser_state start_parse(char*       uri_p_str,
-                                uri_param*  params,
-                                std::size_t max_params)
+    kv_parser_state start_parse(char*            uri_p_str,
+                                parse_callback_t cb)
     {
-        m_token            = uri_p_str;
-        m_params           = params;
-        m_params_count     = 0;
-        m_max_params_count = max_params;
+        m_token = uri_p_str;
+        m_cb    = cb;
 
         process_event(rst());
 
@@ -237,13 +225,12 @@ private:
     // TODO: First key name symbol not digit!
     str_const m_token_chars                  { "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_" };
     str_const m_value_additional_token_chars { "%+.-" };
-    str_const m_equal_chars                  { "="     };
-    str_const m_delimiter_chars              { "&;"    };
+    str_const m_equal_chars                  { "="    };
+    str_const m_delimiter_chars              { "&;"   };
 
-    char*       m_token            { nullptr };
-    uri_param*  m_params           { nullptr };
-    std::size_t m_params_count     { 0       };
-    std::size_t m_max_params_count { 0       };
+    char*            m_token { nullptr          };
+    parse_callback_t m_cb    { nullptr          };
+    kv_pair_t        m_param { nullptr, nullptr };
 };
 
 } // namespace web

@@ -16,35 +16,42 @@ using request_raw_t = const char*;
 
 template
 <
-      std::size_t MAX_URI_LENGTH     = 256
-    , std::size_t MAX_URI_PARAMETERS = 8
-    , std::size_t MAX_HEADER_LENGTH  = 128
-    , std::size_t MAX_HEADERS_COUNT  = 16
+      std::size_t MAX_REQUEST_SIZE   = 1536
+    , std::size_t MAX_URI_LENGTH     = 128
+    , std::size_t MAX_URI_PARAMETERS = 32
+    , std::size_t MAX_HEADERS_COUNT  = 32
 >
 struct request
 {
-    void clear()
+    void clear()                                                        noexcept
     {
         met = method::GET;
         ver = version::HTTP10;
 
-        uri = nullptr;
+        for(auto& c : uri)
+        {
+            c = 0x00;
+        }
 
         for(auto& h : headers)
         {
-            h.clear();
+            h = std::make_pair(nullptr, nullptr);
         }
         headers_count = 0;
 
         for(auto& p : uri_parameters)
         {
-            p.clear();
+            p = std::make_pair(nullptr, nullptr);
         }
-
         uri_parameters_count = 0;
     }
 
     request()
+    {
+        clear();
+    }
+
+    ~request()
     {
         clear();
     }
@@ -59,26 +66,26 @@ struct request
         return MAX_URI_PARAMETERS;
     }
 
-    constexpr static std::size_t max_header_length()                    noexcept
-    {
-        return MAX_HEADER_LENGTH;
-    }
-
     constexpr static std::size_t max_headers_count()                    noexcept
     {
         return MAX_HEADERS_COUNT;
     }
 
-    method          met                                 { method::GET     };
-    version         ver                                 { version::HTTP10 };
+    method      met                                 { method::GET     };
+    version     ver                                 { version::HTTP10 };
 
-    char            uri[MAX_URI_LENGTH]                 { nullptr         };
+    char        uri[MAX_URI_LENGTH];
 
-    kv_pair<16,16>  uri_parameters[MAX_URI_PARAMETERS];
-    std::size_t     uri_parameters_count                { 0               };
+    kv_pair_t   uri_parameters[MAX_URI_PARAMETERS];
+    std::size_t uri_parameters_count                { 0 };
 
-    kv_pair<32,128> headers[MAX_HEADERS_COUNT];
-    std::size_t     headers_count                       { 0               };
+    kv_pair_t   headers[MAX_HEADERS_COUNT];
+    std::size_t headers_count                       { 0 };
+
+    char        body[MAX_REQUEST_SIZE]              {};
+
+private:
+    char        m_pool[MAX_REQUEST_SIZE]            {};
 };
 
 } // namespace web

@@ -18,18 +18,18 @@ template
     , typename    PAGE_500
     , typename... RESOURCES
 >
-class resource_table : public PAGE_400
-                     , public PAGE_404
-                     , public PAGE_500
-                     , public RESOURCES...
+class resource_table : public PAGE_400::second_type
+                     , public PAGE_404::second_type
+                     , public PAGE_500::second_type
+                     , public RESOURCES::second_type...
 {
 public:
     template<typename STREAM, typename RQ>
     status_code call(STREAM& st, const RQ& req)
     {
-        if(nullptr == req.uri)
+        if(0 == strlen(req.uri))
         {
-            return this->PAGE_400::template exec<STREAM>(st, nullptr);
+            return this->PAGE_400::second_type::template exec<STREAM>(st, req);
         }
 
         return call_internal<STREAM, RQ, RESOURCES...>(st, req);
@@ -68,6 +68,8 @@ private:
 
         return false;
     }
+
+    // std::tuple<PAGE_400::second_ty>
 };
 
 } // namespace web

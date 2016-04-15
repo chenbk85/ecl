@@ -28,14 +28,7 @@ public:
     template<typename T, typename RQ>
     status_code exec(T& st, const RQ& req)                                 const
     {
-        if(nullptr != req)
-        {
-            write_status_line(st, req->ver, CODE);
-        }
-        else
-        {
-            write_status_line(st, version::HTTP11, CODE);
-        }
+        write_status_line(st, req.ver, CODE);
 
         set_content_type_header(st, TYPE);
         if(GZIP_COMPRESSED)

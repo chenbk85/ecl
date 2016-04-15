@@ -6,6 +6,8 @@
 #include <ecl/web/request.hpp>
 #include <ecl/web/http_parser/parser_kv_pairs.hpp>
 
+#include <ecl/web/parser_callback_itf.hpp>
+
 #include <cstring>
 
 namespace ecl
@@ -35,14 +37,29 @@ struct event_line
 struct empty_line {};
 struct end_of_req {};
 
-template<typename RQ>
-class parser_fsm : public state_machine<parser_fsm<RQ>,
+class parser_fsm : public state_machine<parser_fsm,
                                         parser_state,
                                         parser_state::init>
 {
+public:
+    parser_fsm(i_parser_callback* cb_itf)
+        : m_callback_interface { cb_itf }
+    {}
+
+private:
+    void uri_param_parsed(kv_pair_t param)
+    {
+        m_callback_interface->set_uri_param(param);
+    }
+
     void on_init_enter()
     {
-        m_request.clear();
+        m_callback_interface->start_of_request();
+    }
+
+    void on_complete_enter()
+    {
+        m_callback_interface->end_of_request();
     }
 
     bool g_request_line_parse(const event_line& e)
@@ -72,12 +89,10 @@ class parser_fsm : public state_machine<parser_fsm<RQ>,
         if(nullptr != uri_param_str)
         {
             *uri_param_str = 0x00; ++uri_param_str;
-            m_request.uri_param_string = uri_param_str;
 
             if(kv_parser_state::done !=
                    m_uri_param_parser.start_parse(uri_param_str,
-                                                  m_request.uri_parameters,
-                                                  MAX_URI_PARAMETERS))
+                       std::bind(&parser_fsm::uri_param_parsed, this, std::placeholders::_1)))
             {
                 return false;
             }
@@ -88,45 +103,45 @@ class parser_fsm : public state_machine<parser_fsm<RQ>,
                         to_string(method::GET),
                         method_str_len))
         {
-            m_request.met = method::GET;
+            m_callback_interface->set_method(method::GET);
         }
         else if(0 == strncmp(method_str,
                              to_string(method::POST),
                              method_str_len))
         {
-            m_request.met = method::POST;
+            m_callback_interface->set_method(method::POST);
         }
         else if(0 == strncmp(method_str,
                              to_string(method::PUT),
                              method_str_len))
         {
-            m_request.met = method::PUT;
+            m_callback_interface->set_method(method::PUT);
         }
         else
         {
             return false;
         }
 
-        m_request.uri = uri_str;
+        m_callback_interface->set_uri(uri_str);
 
         size_t version_str_len = strlen(version_str);
         if(0 == strncmp(version_str,
                         to_string(version::HTTP10),
                         version_str_len))
         {
-            m_request.ver = version::HTTP10;
+            m_callback_interface->set_version(version::HTTP10);
         }
         else if(0 == strncmp(version_str,
                              to_string(version::HTTP11),
                              version_str_len))
         {
-            m_request.ver = version::HTTP11;
+            m_callback_interface->set_version(version::HTTP11);
         }
         else if(0 == strncmp(version_str,
                              to_string(version::HTTP20),
                              version_str_len))
         {
-            m_request.ver = version::HTTP20;
+            m_callback_interface->set_version(version::HTTP20);
         }
         else
         {
@@ -163,9 +178,7 @@ class parser_fsm : public state_machine<parser_fsm<RQ>,
             ++value;
         }
 
-        m_request.headers[m_request.headers_count].name  = name;
-        m_request.headers[m_request.headers_count].value = value;
-        ++m_request.headers_count;
+        m_callback_interface->set_header(kv_pair_t(name, value));
 
         return true;
     }
@@ -177,7 +190,10 @@ class parser_fsm : public state_machine<parser_fsm<RQ>,
             return false;
         }
 
-        m_request.body = e.line;
+        const uint8_t* const body_ptr = (const uint8_t* const)(e.line);
+
+        // TODO: size!!!
+        m_callback_interface->push_body_part(body_ptr, 0);
 
         return true;
     }
@@ -204,7 +220,8 @@ class parser_fsm : public state_machine<parser_fsm<RQ>,
 
     using callback_table_t = callback_table
     <
-        scb< s::init, &p::on_init_enter >
+        scb< s::init     , &p::on_init_enter     >,
+        scb< s::complete , &p::on_complete_enter >
     >;
 
 public:
@@ -222,6 +239,8 @@ private:
         str_const("="),
         str_const("&;")
     };
+
+    i_parser_callback* m_callback_interface;
 };
 
 } // namespace web

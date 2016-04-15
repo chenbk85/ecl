@@ -29,7 +29,7 @@ public:
     template<typename T, typename RQ>
     ecl::web::status_code exec(T& st, const RQ& req)
     {
-        ecl::web::write_status_line(st, req->ver, ecl::web::status_code::OK);
+        ecl::web::write_status_line(st, req.ver, ecl::web::status_code::OK);
 
         return ecl::web::status_code::OK;
     }
@@ -55,12 +55,12 @@ public:
     {
         (void)st;
 
-        for(auto& h : req->headers)
+        for(auto& h : req.headers)
         {
-            if((0 == strcmp(ecl::web::to_string(ecl::web::header_name::CONTENT_TYPE), h.name)) &&
-               (nullptr != strstr(h.value, ecl::web::to_string(ecl::web::content_type::APPLICATION_JSON))))
+            if((0 == strcmp(ecl::web::to_string(ecl::web::header_name::CONTENT_TYPE), h.first)) &&
+               (nullptr != strstr(h.second, ecl::web::to_string(ecl::web::content_type::APPLICATION_JSON))))
             {
-                if(m_doc.deserialize(req->body))
+                if(m_doc.deserialize(req.body))
                 {
                     m_doc.serialize(std::cout, true);
                     std::cout << std::endl;
@@ -71,7 +71,7 @@ public:
             }
         }
 
-        ecl::web::redirect(st, "/400.html", req->ver);
+        ecl::web::redirect(st, "/400.html", req.ver);
 
         return ecl::web::status_code::BAD_REQUEST;
     }
@@ -79,6 +79,9 @@ public:
 
 class info
 {
+public:
+    info() {}
+
 private:
     using document_t = ecl::json::object
     <
@@ -93,7 +96,7 @@ public:
     template<typename T, typename RQ>
     ecl::web::status_code exec(T& st, const RQ& req)
     {
-        ecl::web::write_status_line(st, req->ver, ecl::web::status_code::OK);
+        ecl::web::write_status_line(st, req.ver, ecl::web::status_code::OK);
 
         ecl::web::set_content_type_header(st, ecl::web::content_type::APPLICATION_JSON);
 
@@ -116,14 +119,30 @@ private:
 class auth
 {
 public:
+    auth() {}
+
+private:
+    constexpr static std::size_t MAX_PARAMS_COUNT { 16 };
+
+    void param_parsed(ecl::web::kv_pair_t p)
+    {
+        if(m_params_count == MAX_PARAMS_COUNT)
+        {
+            return;
+        }
+        m_params[m_params_count] = p;
+        ++m_params_count;
+    }
+
+public:
     template<typename T, typename RQ>
     ecl::web::status_code exec(T& st, const RQ& req)
     {
         char buf[128];
 
-        if(strlen(req->body) < 128)
+        if(strlen(req.body) < 128)
         {
-            strcpy(buf, req->body);
+            strcpy(buf, req.body);
         }
         else
         {
@@ -131,10 +150,13 @@ public:
             return ecl::web::status_code::OK;
         }
 
-        ecl::web::uri_param params[16];
+        for(auto& p : m_params)
+        {
+            p = std::make_pair(nullptr, nullptr);
+        }
 
         if(ecl::web::kv_parser_state::done !=
-               m_parser.start_parse(buf, params, 16))
+               m_parser.start_parse(buf, std::bind(&auth::param_parsed, this, std::placeholders::_1)))
         {
             std::cout << "Parse failed!" << std::endl;
             authorized = false;
@@ -143,23 +165,26 @@ public:
         {
             std::cout << "Parse ok!" << std::endl;
             authorized = false;
-            for(std::size_t i = 0; i < 16; ++i)
+            for(std::size_t i = 0; i < MAX_PARAMS_COUNT; ++i)
             {
-                if((0 == strcmp(params[i].name, "pass")) &&
-                   (0 == strcmp(params[i].value, "239")))
+                if((0 == strcmp(m_params[i].first,  "pass")) &&
+                   (0 == strcmp(m_params[i].second, "239")))
                 {
                     authorized = true;
-                    ecl::web::redirect(st, "/authorized_index.html", req->ver);
+                    ecl::web::redirect(st, "/authorized_index.html", req.ver);
                     return ecl::web::status_code::OK;
                 }
             }
         }
 
-        ecl::web::redirect(st, "/index.html", req->ver);
+        ecl::web::redirect(st, "/index.html", req.ver);
         return ecl::web::status_code::OK;
     }
 
 private:
+    ecl::web::kv_pair_t m_params[MAX_PARAMS_COUNT] {};
+    std::size_t         m_params_count { 0 };
+
     bool authorized { false };
     ecl::web::kv_parser m_parser
     {

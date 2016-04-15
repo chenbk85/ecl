@@ -13,11 +13,10 @@ namespace web
 template
 <
       typename    RESOURCES
-    , std::size_t MAX_REQUEST_CHUNK_SIZE = 1024
-    , std::size_t MAX_URI_LENGTH         = 256
-    , std::size_t MAX_URI_PARAMETERS     = 8
-    , std::size_t MAX_HEADER_LENGTH      = 128
-    , std::size_t MAX_HEADERS_COUNT      = 16
+    , std::size_t MAX_REQUEST_CHUNK_SIZE = 1536
+    , std::size_t MAX_URI_LENGTH         = 128
+    , std::size_t MAX_URI_PARAMETERS     = 32
+    , std::size_t MAX_HEADERS_COUNT      = 32
 >
 class server
 {
@@ -29,7 +28,6 @@ private:
           MAX_REQUEST_CHUNK_SIZE
         , MAX_URI_LENGTH
         , MAX_URI_PARAMETERS
-        , MAX_HEADER_LENGTH
         , MAX_HEADERS_COUNT
     >;
 
@@ -42,7 +40,7 @@ public:
         while(nullptr != req_raw)
         {
             m_request     = m_parser.parse(req_raw, size);
-            statuc_code c = m_resources.template call<STREAM, request_t>(st, m_request);
+            status_code c = m_resources.template call<STREAM, request_t>(st, m_request);
         }
     }
 
