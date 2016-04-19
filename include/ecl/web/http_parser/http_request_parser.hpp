@@ -71,30 +71,30 @@ class http_request_parser : public state_machine
 
     using transition_table_t = transition_table
     <
-        row< s::init                   , start      , s::parsing_method                                       >,
+        row < s::init                   , start      , s::parsing_method                                       >,
 
-        row< s::parsing_method         , char       , s::parsing_method_done                                  >,
-        row< s::parsing_method_done    , char       , s::parsing_uri          , nullptr , &p::g_is_space      >,
+        row < s::parsing_method         , char       , s::parsing_method_done                                  >,
+        row < s::parsing_method_done    , char       , s::parsing_uri          , nullptr , &p::g_is_space      >,
 
-        row< s::parsing_uri            , char       , s::parsing_uri_done                                     >,
-        row< s::parsing_uri_done       , char       , s::parsing_version      , nullptr , &p::g_is_space      >,
+        row < s::parsing_uri            , char       , s::parsing_uri_done                                     >,
+        row < s::parsing_uri_done       , char       , s::parsing_version      , nullptr , &p::g_is_space      >,
 
-        row< s::parsing_version        , char       , s::parsing_version_done , nullptr , &p::g_check_version >,
-        row< s::parsing_version_done   , char       , s::parsing_header       , nullptr , &p::g_is_eol        >,
+        row < s::parsing_version        , char       , s::parsing_version_done , nullptr , &p::g_check_version >,
+        row < s::parsing_version_done   , char       , s::parsing_header       , nullptr , &p::g_is_eol        >,
 
-        row< s::parsing_header         , char       , s::parsing_header_done                                  >,
-        row< s::parsing_header_done    , char       , s::waiting_for_eol      , nullptr , &p::g_is_eol        >,
-        row< s::waiting_for_eol        , char       , s::receiving_body                                       >,
+        row < s::parsing_header         , char       , s::parsing_header_done                                  >,
+        row < s::parsing_header_done    , char       , s::waiting_for_eol      , nullptr , &p::g_is_eol        >,
+        row < s::waiting_for_eol        , char       , s::receiving_body                                       >,
 
-        row< s::receiving_body         , char       , s::receiving_body                                       >,
-        row< s::receiving_body         , end_of_req , s::init                                                 >,
+        row < s::receiving_body         , char       , s::receiving_body                                       >,
+        row < s::receiving_body         , end_of_req , s::init                                                 >,
 
 // Errors
-        row < s::error                 , rst        , s::init                                                 >,
-        row < s::error_parsing_method  , rst        , s::init                                                 >,
-        row < s::error_parsing_uri     , rst        , s::init                                                 >,
-        row < s::error_parsing_version , rst        , s::init                                                 >,
-        row < s::error_parsing_header  , rst        , s::init                                                 >
+        row < s::error                  , rst        , s::init                                                 >,
+        row < s::error_parsing_method   , rst        , s::init                                                 >,
+        row < s::error_parsing_uri      , rst        , s::init                                                 >,
+        row < s::error_parsing_version  , rst        , s::init                                                 >,
+        row < s::error_parsing_header   , rst        , s::init                                                 >
     >;
 
     using callback_table_t = callback_table

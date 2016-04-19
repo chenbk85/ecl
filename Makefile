@@ -114,7 +114,7 @@ test_$(CMD): out_dir
 	$(CXX) $(FLAGS) -I$(INCLUDE_DIR) -Wl,-Map=$(BIN_DIR)/$(CMD)_$(CXX).map $(TESTS_DIR)/test_$(CMD).cpp -o $(BIN_DIR)/$(CMD)_$(CXX)
 
 test_$(WEB): out_dir gen_web_res
-	$(CXX) $(FLAGS) -I$(INCLUDE_DIR) -Wl,-Map=$(BIN_DIR)/$(WEB)_$(CXX).map $(TESTS_DIR)/test_$(WEB).cpp $(WEB_GEN_SOURCES) -o $(BIN_DIR)/$(WEB)_$(CXX)
+	$(CXX) $(FLAGS) -I$(INCLUDE_DIR) -Wl,-Map=$(BIN_DIR)/$(WEB)_$(CXX).map $(TESTS_DIR)/test_$(WEB).cpp $(WEB_GEN_SOURCES) $(INCLUDE_DIR)/ecl/web/http_parser/http_parser.c -o $(BIN_DIR)/$(WEB)_$(CXX)
 
 gcov_$(FSM): test_$(FSM)
 	$(BIN_DIR)/$(FSM)_$(CXX)
